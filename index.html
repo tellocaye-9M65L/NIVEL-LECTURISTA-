@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INL – Nivel del Lecturista</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #0f172a;
+  color: #e5e7eb;
+  padding: 20px;
+}
+h1 { text-align: center; color: #38bdf8; }
+.card {
+  background: #020617;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 520px;
+  margin: auto;
+}
+label { margin-top: 12px; display: block; }
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 6px;
+  border-radius: 8px;
+  border: 1px solid #1e293b;
+  background: #020617;
+  color: #e5e7eb;
+}
+button {
+  margin-top: 20px;
+  width: 100%;
+  padding: 14px;
+  background: #38bdf8;
+  color: #020617;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+}
+.result {
+  margin-top: 20px;
+  padding: 15px;
+  background: #020617;
+  border-radius: 10px;
+  border: 1px solid #1e293b;
+}
+.level {
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<h1>INL – Nivel del Lecturista</h1>
+
+<div class="card">
+
+<label>Lecturas realizadas</label>
+<input type="number" id="lecturas">
+
+<label>Horas activas (decimal, ej. 2.25)</label>
+<input type="number" step="0.01" id="horas">
+
+<label>Kilómetros recorridos</label>
+<input type="number" step="0.01" id="km">
+
+<label>Zona</label>
+<select id="zona">
+  <option value="1.0">Urbana nueva</option>
+  <option value="1.05">Semiurbana</option>
+  <option value="1.1">Mixta</option>
+  <option value="1.15">Zona dura</option>
+</select>
+
+<label>Terreno</label>
+<select id="terreno">
+  <option value="0">Plano</option>
+  <option value="2">Ondulado</option>
+  <option value="4">Desnivel fuerte</option>
+</select>
+
+<label>Clima</label>
+<select id="clima">
+  <option value="0">Fresco</option>
+  <option value="2">Caluroso</option>
+  <option value="4">Calor + humedad</option>
+</select>
+
+<label>% lecturas interiores</label>
+<select id="interior">
+  <option value="0">&lt;20%</option>
+  <option value="2">20–40%</option>
+  <option value="4">&gt;40%</option>
+</select>
+
+<label>FC promedio (opcional)</label>
+<input type="number" id="fc">
+
+<label>¿Podrías repetir este día mañana?</label>
+<select id="sost">
+  <option value="10">Sí</option>
+  <option value="6">Tal vez</option>
+  <option value="2">No</option>
+</select>
+
+<button onclick="calcular()">Calcular Nivel</button>
+
+<div class="result" id="resultado"></div>
+
+</div>
+
+<script>
+function calcular() {
+
+const lect = Number(lecturas.value);
+const horas = Number(document.getElementById("horas").value);
+const km = Number(document.getElementById("km").value);
+
+if (!lect || !horas || !km) {
+  alert("Completa lecturas, horas y kilómetros");
+  return;
+}
+
+// Ritmo lecturas/h
+const rrl = lect / horas;
+let ptsRRL = rrl < 180 ? 5 : rrl < 220 ? 10 : rrl < 260 ? 18 : rrl < 300 ? 25 : 30;
+
+// Costo por lectura
+const cpl = (horas * 3600) / lect;
+let ptsCPL = cpl > 20 ? 5 : cpl > 17 ? 10 : cpl > 14 ? 18 : cpl > 12 ? 22 : 25;
+
+// Densidad lecturas/km
+const dens = lect / km;
+let ptsDens = dens < 80 ? 2 : dens < 120 ? 5 : dens < 160 ? 8 : 10;
+
+// Dificultad
+const zona = Number(document.getElementById("zona").value);
+const terreno = Number(document.getElementById("terreno").value);
+const clima = Number(document.getElementById("clima").value);
+const interior = Number(document.getElementById("interior").value);
+let ptsDif = Math.min(20, Math.round((terreno + clima + interior) * zona));
+
+// FC
+const fc = Number(document.getElementById("fc").value);
+let ptsFC = !fc ? 8 : fc < 110 ? 15 : fc < 120 ? 12 : fc < 130 ? 8 : 4;
+
+// Sostenibilidad
+const ptsSost = Number(document.getElementById("sost").value);
+
+// Total
+const INL = Math.round(ptsRRL + ptsCPL + ptsDens + ptsDif + ptsFC + ptsSost);
+
+let nivel = INL < 45 ? "BÁSICO" :
+            INL < 65 ? "FUNCIONAL" :
+            INL < 80 ? "AVANZADO" :
+            INL < 95 ? "ALTO RENDIMIENTO" : "ÉLITE";
+let mensaje = "";
+
+if (nivel === "BÁSICO") {
+  mensaje = "Estás en un nivel básico. Cumples la jornada, pero tu costo físico y de tiempo es alto. Hay amplio margen de mejora.";
+} else if (nivel === "FUNCIONAL") {
+  mensaje = "Nivel funcional. Sacas el trabajo, pero en jornadas largas el desgaste te alcanza. Estás en la media de la mayoría.";
+} else if (nivel === "AVANZADO") {
+  mensaje = "Nivel avanzado. Tu rendimiento está por arriba del promedio. En tu zona, estarías en el top 30–40%.";
+} else if (nivel === "ALTO RENDIMIENTO") {
+  mensaje = "Alto rendimiento. Manejas bien el esfuerzo y la dificultad. Estás en el top 10–15% en condiciones similares.";
+} else {
+  mensaje = "Nivel élite. Tu eficiencia y sostenibilidad te colocan en el top 5% o menos. Este nivel no es común.";
+}
+document.getElementById("resultado").innerHTML = `
+<strong>INL:</strong> ${INL}/110
+<div class="level">Nivel: ${nivel}</div>
+<p>${mensaje}</p>
+<p>
+Ritmo: ${rrl.toFixed(1)} lect/h<br>
+Costo por lectura: ${cpl.toFixed(1)} s<br>
+Densidad: ${dens.toFixed(1)} lect/km
+</p>`;
+}
+</script>
+
+</body>
+</html>
